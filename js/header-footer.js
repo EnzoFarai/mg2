@@ -9,8 +9,14 @@ function loadHeaderFooter() {
     fetch(basePath + 'header.html')
         .then(response => response.text())
         .then(data => {
-            document.getElementById('header-placeholder').innerHTML = data;
-            initializeHeader(basePath);
+            // Process the header HTML to fix links
+            let headerHtml = data;
+            if (isInBlogArticles) {
+                // Add ../ to all relative links in header
+                headerHtml = headerHtml.replace(/href="([^"#][^"]*)"/g, 'href="../$1"');
+            }
+            document.getElementById('header-placeholder').innerHTML = headerHtml;
+            initializeHeader();
         })
         .catch(error => console.error('Error loading header:', error));
     
@@ -18,7 +24,13 @@ function loadHeaderFooter() {
     fetch(basePath + 'footer.html')
         .then(response => response.text())
         .then(data => {
-            document.getElementById('footer-placeholder').innerHTML = data;
+            // Process the footer HTML to fix links
+            let footerHtml = data;
+            if (isInBlogArticles) {
+                // Add ../ to all relative links in footer
+                footerHtml = footerHtml.replace(/href="([^"#][^"]*)"/g, 'href="../$1"');
+            }
+            document.getElementById('footer-placeholder').innerHTML = footerHtml;
         })
         .catch(error => console.error('Error loading footer:', error));
     
@@ -48,7 +60,7 @@ function loadModals(basePath) {
 }
 
 // Initialize header functionality
-function initializeHeader(basePath) {
+function initializeHeader() {
     // Mobile Menu Toggle
     const mobileMenu = document.getElementById('mobile-menu');
     const navMenu = document.getElementById('nav-menu');
@@ -59,27 +71,8 @@ function initializeHeader(basePath) {
         });
     }
     
-    // Update navigation links to use absolute paths from root
-    const navLinks = document.querySelectorAll('nav ul li a');
-    navLinks.forEach(link => {
-        const href = link.getAttribute('href');
-        
-        // Skip external links and anchor links
-        if (href.startsWith('http') || href.startsWith('#') || href.startsWith('mailto:') || href.startsWith('tel:')) {
-            return;
-        }
-        
-        // Convert relative paths to root-relative paths
-        if (href === 'index.html') {
-            link.setAttribute('href', basePath + 'index.html');
-        } else if (href.startsWith('./')) {
-            link.setAttribute('href', basePath + href.substring(2));
-        } else if (!href.startsWith('../')) {
-            link.setAttribute('href', basePath + href);
-        }
-    });
-    
     // Close mobile menu when a link is clicked
+    const navLinks = document.querySelectorAll('nav ul li a');
     navLinks.forEach(link => {
         link.addEventListener('click', () => {
             if (navMenu) {
