@@ -1,7 +1,8 @@
 // Function to load header and footer dynamically
 function loadHeaderFooter() {
     // Determine the correct path based on current location
-    const isInBlogArticles = window.location.pathname.includes('/blog-articles/');
+    const currentPath = window.location.pathname;
+    const isInBlogArticles = currentPath.includes('/blog-articles/');
     const basePath = isInBlogArticles ? '../' : './';
     
     // Load header
@@ -9,7 +10,7 @@ function loadHeaderFooter() {
         .then(response => response.text())
         .then(data => {
             document.getElementById('header-placeholder').innerHTML = data;
-            initializeHeader();
+            initializeHeader(basePath);
         })
         .catch(error => console.error('Error loading header:', error));
     
@@ -47,7 +48,7 @@ function loadModals(basePath) {
 }
 
 // Initialize header functionality
-function initializeHeader() {
+function initializeHeader(basePath) {
     // Mobile Menu Toggle
     const mobileMenu = document.getElementById('mobile-menu');
     const navMenu = document.getElementById('nav-menu');
@@ -58,8 +59,27 @@ function initializeHeader() {
         });
     }
     
-    // Close mobile menu when a link is clicked
+    // Update navigation links to use absolute paths from root
     const navLinks = document.querySelectorAll('nav ul li a');
+    navLinks.forEach(link => {
+        const href = link.getAttribute('href');
+        
+        // Skip external links and anchor links
+        if (href.startsWith('http') || href.startsWith('#') || href.startsWith('mailto:') || href.startsWith('tel:')) {
+            return;
+        }
+        
+        // Convert relative paths to root-relative paths
+        if (href === 'index.html') {
+            link.setAttribute('href', basePath + 'index.html');
+        } else if (href.startsWith('./')) {
+            link.setAttribute('href', basePath + href.substring(2));
+        } else if (!href.startsWith('../')) {
+            link.setAttribute('href', basePath + href);
+        }
+    });
+    
+    // Close mobile menu when a link is clicked
     navLinks.forEach(link => {
         link.addEventListener('click', () => {
             if (navMenu) {
